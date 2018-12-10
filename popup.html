@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		body
+		{
+			min-width: 180px;
+		}
+
+		#myLink
+		{
+			border: 1px solid black;
+			padding: 2px 4px;
+			margin-bottom: 4px;
+		}
+
+		#copied
+		{
+			display: none;
+			color: #00B500;
+			font-weight: bold;
+			margin-left: 10px;
+		}
+
+		#getLink
+		{
+			margin-bottom: 20px;
+		}
+
+		#copyAutomatically
+		{
+			vertical-align: text-top;
+		}
+	</style>
+</head>
+<body>
+	<div id="myLink"></div>
+	<input type="button" id="getLink" value="Copy link to clipboard" /><span id="copied">copied</span>
+	<div><label title="Copy to clipboard automatically when activating extension"><input type="checkbox" id="copyAutomatically" /> copy automatically</label></div>
+	<script src="popup.js"></script>
+</body>
+</html>
