@@ -50,7 +50,7 @@ chrome.storage.sync.get(['copyAutomatically'], function (result)
 chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs)
 {
 	var url = tabs[0].url;
-	var m = url.match(/\/dp\/([^\/?#]+)/i);
+	var m = url.match(/\/(?:dp|gp\/product)\/([^\/?#]+)/i);
 	if (!m)
 	{
 		console.log("Unexpected product URL format", url);
