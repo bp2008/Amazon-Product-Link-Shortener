@@ -59,7 +59,7 @@ chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs)
 		return;
 	}
 	var asin = m[1];
-	var link = "http://amzn.com/" + asin;
+	var link = "http://amzn.com/dp/" + asin;
 	var doCopy = function ()
 	{
 		CopyToClipboard(link);
