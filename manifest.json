@@ -1,13 +1,12 @@
 {
     "name": "Amazon Product Link Shortener",
-    "version": "1.4",
+    "version": "1.5",
     "description": "Creates a short and clean link to the current amazon.com product page, for easy sharing.",
     "permissions": [ "declarativeContent", "tabs", "storage", "clipboardWrite" ],
     "background": {
-        "scripts": [ "background.js" ],
-        "persistent": false
+        "service_worker": "background.js"
     },
-    "page_action": {
+    "action": {
         "default_popup": "popup.html",
         "default_icon": {
             "32": "icon32.png",
@@ -15,5 +14,5 @@
             "128": "icon128.png"
         }
     },
-    "manifest_version": 2
+    "manifest_version": 3
 }

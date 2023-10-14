@@ -21,6 +21,8 @@ function SelectText(node)
 		console.warn("Could not select text in node: Unsupported browser.");
 	}
 }
+
+var hideCopiedTextTimeout = null;
 function CopyToClipboard(str)
 {
 	const el = document.createElement('textarea');
@@ -29,6 +31,22 @@ function CopyToClipboard(str)
 	el.select();
 	document.execCommand('copy');
 	document.body.removeChild(el);
+	if (ele_copied)
+	{
+		ele_copied.style.display = "inline";
+		clearTimeout(hideCopiedTextTimeout);
+		hideCopiedTextTimeout = setTimeout(function()
+		{
+			ele_copied.style.display = "none";
+		}, 2000);
+	}
+}
+async function CreateCheckboxSetting(settingName, onChange)
+{
+	var cbs = new CheckboxSetting(settingName,onChange);
+	var result = await chrome.storage.sync.get([settingName]);
+	cbs.set(result[settingName]);
+	return cbs;
 }
 function CheckboxSetting(settingName, onChange)
 {
@@ -41,10 +59,6 @@ function CheckboxSetting(settingName, onChange)
 		if (typeof onChange === "function")
 			onChange();
 	});
-	chrome.storage.sync.get([settingName], function (result)
-	{
-		ele_checkbox.checked = result[settingName];
-	});
 	this.get = function ()
 	{
 		return ele_checkbox.checked;
@@ -52,22 +66,21 @@ function CheckboxSetting(settingName, onChange)
 	this.set = function (value)
 	{
 		ele_checkbox.checked = !!value;
+		if (typeof onChange === "function")
+			onChange();
 	}
 }
 
-// Perform setup activities
 var ele_getLink = document.getElementById("getLink");
 var ele_myLink = document.getElementById("myLink");
 var ele_copied = document.getElementById("copied");
-
-var copyAutomatically = new CheckboxSetting("copyAutomatically");
-var useFullDomain = new CheckboxSetting("useFullDomain", produceShortLink);
-var useHttps = new CheckboxSetting("useHttps", produceShortLink);
 
 var lastUrl = null;
 
 function produceShortLink()
 {
+	if(!lastUrl)
+		return; // The extension hasn't been activated yet
 	var m = lastUrl.match(/\/(?:dp|gp\/product)\/([^\/?#]+)/i);
 	if (!m)
 	{
@@ -84,7 +97,6 @@ function produceShortLink()
 	var doCopy = function ()
 	{
 		CopyToClipboard(link);
-		ele_copied.style.display = "inline";
 	};
 	ele_getLink.addEventListener("click", doCopy);
 
@@ -105,8 +117,17 @@ function produceShortLink()
 	});
 }
 
+// Perform setup activities
+
+var copyAutomatically = await CreateCheckboxSetting("copyAutomatically", produceShortLink);
+var useFullDomain = await CreateCheckboxSetting("useFullDomain", produceShortLink);
+var useHttps = await CreateCheckboxSetting("useHttps", produceShortLink);
+
 chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs)
 {
-	lastUrl = tabs[0].url;
-	produceShortLink();
+	if (tabs.length > 0)
+	{
+		lastUrl = tabs[0].url;
+		produceShortLink();
+	}
 });

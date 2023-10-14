@@ -1,16 +1,13 @@
 chrome.runtime.onInstalled.addListener(function ()
 {
 	chrome.storage.sync.set({ copyAutomatically: true });
-	chrome.declarativeContent.onPageChanged.removeRules(undefined, function ()
-	{
-		chrome.declarativeContent.onPageChanged.addRules([{
-			conditions: [new chrome.declarativeContent.PageStateMatcher({
-				pageUrl: {
-					hostSuffix: 'amazon.com'
-				}
-			})
-			],
-			actions: [new chrome.declarativeContent.ShowPageAction()]
-		}]);
+	chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+		if (changeInfo.url) {
+			if (tab.url.includes('amazon.com')) {
+				chrome.action.enable(tabId);
+			} else {
+				chrome.action.disable(tabId);
+			}
+		}
 	});
 });
