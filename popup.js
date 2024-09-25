@@ -1,3 +1,6 @@
+///////////////////////
+// Utility Functions //
+///////////////////////
 function SelectText(node)
 {
 	node = document.getElementById(node);
@@ -23,89 +26,143 @@ function SelectText(node)
 }
 
 var hideCopiedTextTimeout = null;
-function CopyToClipboard(str)
+async function CopyToClipboard(str)
 {
-	const el = document.createElement('textarea');
-	el.value = str;
-	document.body.appendChild(el);
-	el.select();
-	document.execCommand('copy');
-	document.body.removeChild(el);
+	try
+	{
+		await navigator.clipboard.writeText(str);
+		showCopied();
+	}
+	catch (ex)
+	{
+		console.error(ex);
+		showCopyFailed();
+	}
+}
+var ele_copied = document.getElementById("copied");
+function showCopied()
+{
+	if (ele_copyFailed)
+		ele_copyFailed.style.display = "none";
 	if (ele_copied)
 	{
 		ele_copied.style.display = "inline";
 		clearTimeout(hideCopiedTextTimeout);
-		hideCopiedTextTimeout = setTimeout(function()
+		hideCopiedTextTimeout = setTimeout(function ()
 		{
 			ele_copied.style.display = "none";
 		}, 2000);
 	}
 }
-async function CreateCheckboxSetting(settingName, onChange)
+var ele_copyFailed = document.getElementById("copyFailed");
+function showCopyFailed()
 {
-	var cbs = new CheckboxSetting(settingName,onChange);
+	if (ele_copied)
+		ele_copied.style.display = "none";
+	if (ele_copyFailed)
+	{
+		ele_copyFailed.style.display = "inline";
+		clearTimeout(hideCopiedTextTimeout);
+		hideCopiedTextTimeout = setTimeout(function ()
+		{
+			ele_copyFailed.style.display = "none";
+		}, 2000);
+	}
+}
+async function CreateCheckboxSetting(settingName, defaultValue, onChange)
+{
+	var cbs = new CheckboxSetting(settingName, onChange);
 	var result = await chrome.storage.sync.get([settingName]);
 	cbs.set(result[settingName]);
+	cbs.attachChangeListener(onChange);
 	return cbs;
 }
-function CheckboxSetting(settingName, onChange)
+function CheckboxSetting(settingName, defaultValue)
 {
 	var ele_checkbox = document.getElementById(settingName);
-	ele_checkbox.addEventListener("change", function (e)
-	{
-		var obj = {};
-		obj[settingName] = e.target.checked;
-		chrome.storage.sync.set(obj);
-		if (typeof onChange === "function")
-			onChange();
-	});
 	this.get = function ()
 	{
 		return ele_checkbox.checked;
 	}
 	this.set = function (value)
 	{
-		ele_checkbox.checked = !!value;
+		if (typeof value === "undefined")
+			ele_checkbox.checked = defaultValue;
+		else
+			ele_checkbox.checked = !!value;
 		if (typeof onChange === "function")
 			onChange();
 	}
+	this.attachChangeListener = function (onChange)
+	{
+		ele_checkbox.addEventListener("change", function (e)
+		{
+			var obj = {};
+			obj[settingName] = e.target.checked;
+			chrome.storage.sync.set(obj);
+			if (typeof onChange === "function")
+				onChange();
+		});
+	}
 }
-
+////////////////////////////////
+// Extension Primary Behavior //
+////////////////////////////////
 var ele_getLink = document.getElementById("getLink");
+ele_getLink.addEventListener("click", CopyLinkToClipboard);
+
 var ele_myLink = document.getElementById("myLink");
-var ele_copied = document.getElementById("copied");
 
 var lastUrl = null;
+var link = null;
 
-function produceShortLink()
+async function CopyLinkToClipboard()
 {
-	if(!lastUrl)
+	if (link)
+		await CopyToClipboard(link);
+	else
+	{
+		console.log("Unable to copy shortened amazon product link.  Link is not assigned.");
+		showCopyFailed();
+	}
+}
+
+async function produceShortLink()
+{
+	if (!lastUrl)
 		return; // The extension hasn't been activated yet
+
+	// Parse URL
 	var m = lastUrl.match(/\/(?:dp|gp\/product)\/([^\/?#]+)/i);
 	if (!m)
 	{
 		console.log("Unexpected product URL format", lastUrl);
+		link = null;
 		ele_myLink.innerText = "URL not recognized as an Amazon product.";
 		ele_getLink.style.display = "none";
 		return;
 	}
-	var asin = m[1];
-	var domain = "amzn.com";
-	if (useFullDomain.get())
-		domain = "amazon.com";
-	var link = "http" + (useHttps.get() ? "s" : "") + "://" + domain + "/dp/" + asin;
-	var doCopy = function ()
-	{
-		CopyToClipboard(link);
-	};
-	ele_getLink.addEventListener("click", doCopy);
 
+	// Create Link
+	var lastUrlAsURL = new URL(lastUrl);
+	if (noWWW.get() && lastUrlAsURL.hostname.match(/^www\./i))
+	{
+		lastUrlAsURL.hostname = lastUrlAsURL.hostname.substring(4);
+	}
+	var origin = lastUrlAsURL.origin;
+	var asin = m[1];
+	link = origin + "/dp/" + asin;
+
+	// Assign link text
 	ele_myLink.innerText = link;
 	SelectText("myLink");
 
 	if (copyAutomatically.get())
-		doCopy();
+	{
+		await CopyLinkToClipboard();
+	}
 
+	// Generate QR code
 	document.getElementById("qrcode").innerHTML = "";
 	var qrcode = new QRCode(document.getElementById("qrcode"), {
 		text: link,
@@ -119,15 +176,14 @@ function produceShortLink()
 
 // Perform setup activities
 
-var copyAutomatically = await CreateCheckboxSetting("copyAutomatically", produceShortLink);
-var useFullDomain = await CreateCheckboxSetting("useFullDomain", produceShortLink);
-var useHttps = await CreateCheckboxSetting("useHttps", produceShortLink);
+var copyAutomatically = await CreateCheckboxSetting("copyAutomatically", true, produceShortLink);
+var noWWW = await CreateCheckboxSetting("noWWW", true, produceShortLink);
 
-chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs)
+chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs)
 {
 	if (tabs.length > 0)
 	{
 		lastUrl = tabs[0].url;
-		produceShortLink();
+		await produceShortLink();
 	}
 });

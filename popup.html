@@ -22,6 +22,14 @@
 			margin-left: 10px;
 		}
 
+		#copyFailed
+		{
+			display: none;
+			color: #FF0000;
+			font-weight: bold;
+			margin-left: 10px;
+		}
+
 		#getLink
 		{
 			margin-bottom: 20px;
@@ -40,12 +48,11 @@
 </head>
 <body>
 	<div id="myLink"></div>
-	<input type="button" id="getLink" value="Copy link to clipboard" /><span id="copied">copied</span>
+	<input type="button" id="getLink" value="Copy link to clipboard" /><span id="copied">copied</span><span id="copyFailed">copy failed</span>
 	<div><label title="Copy to clipboard automatically when activating extension"><input type="checkbox" id="copyAutomatically" /> copy automatically</label></div>
-	<div><label title="amzn.com sometimes is not very responsive"><input type="checkbox" id="useFullDomain" /> use full "amazon.com" domain</label></div>
-	<div><label><input type="checkbox" id="useHttps" /> use https</label></div>
+	<div><label><input type="checkbox" id="noWWW" /> remove "www."</label></div>
 	<div id="qrcode"></div>
 	<script src="qrcode.js"></script>
-	<script src="popup.js" type="module"></script>
+	<script src="popup.js?v=1.7" type="module"></script>
 </body>
 </html>
