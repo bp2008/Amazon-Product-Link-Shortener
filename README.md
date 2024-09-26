@@ -5,10 +5,6 @@ A chrome extension which creates a short and clean link to the current amazon.co
 
 https://chrome.google.com/webstore/detail/amazon-product-link-short/kjjlkpmgccmimghapoichdfffocambjp
 
+Version 1.7 screenshot:
 [![screenshot](https://raw.githubusercontent.com/bp2008/Amazon-Product-Link-Shortener/master/screenshot.jpg)](https://chrome.google.com/webstore/detail/amazon-product-link-short/kjjlkpmgccmimghapoichdfffocambjp)
 
-Version 1.7 screenshot:  
-![image](https://github.com/user-attachments/assets/63c7d756-324f-4928-9616-74e601ab395a)
-
-Version 1.4 screenshot:  
-![screenshot](https://github.com/bp2008/Amazon-Product-Link-Shortener/blob/master/screenshot3.png?raw=true)
